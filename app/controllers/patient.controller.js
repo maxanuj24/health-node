@@ -1,0 +1,120 @@
+const Patient = require('../model/patient.model.js');
+
+
+exports.create=(req,res)=>{
+
+    const patient = new Patient({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        age: req.body.age,
+        gender: req.body.gender,
+        address: req.body.address,
+        phone: req.body.phone,
+        consultedBy: req.body.consultedBy,
+        consulted: req.body.consulted,
+        complains: req.body.complains,
+        results: req.body.results,
+        prescription: req.body.prescription
+    });
+
+    patient.save().
+    then(data=>{
+        res.send(data);
+    }).catch(err=>{
+        res.status(500).send({
+            message: err.message || "Some error occurred while creating the Patient."
+        });
+    });
+  };
+
+
+  
+exports.findAll = (req, res) => {
+    Patient.find()
+    .then(patients => {
+        res.send(patients);
+    }).catch(err => {
+        res.status(500).send({
+            message: err.message || "Some error occurred while retrieving events."
+        });
+    });
+};
+
+
+exports.findOne = (req, res) => {
+    Patient.findById(req.params.patientId)
+    .then(event => {
+        if(!event) {
+            return res.status(404).send({
+                message: "Patient not found with id " + req.params.patientId
+            });            
+        }
+        res.send(event);
+    }).catch(err => {
+        if(err.kind === 'ObjectId') {
+            return res.status(404).send({
+                message: "Patient not found with id " + req.params.patientId
+            });                
+        }
+        return res.status(500).send({
+            message: "Error retrieving Patient with id " + req.params.patientId
+        });
+    });
+};
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+exports.update = (req, res) => {
+    // Validate Request
+    if(!req.body.firstName) {
+        return res.status(400).send({
+            message: "Patient content cannot be empty"
+        });
+    }
+
+    // Find note and update it with the request body
+    Patient.findByIdAndUpdate(req.params.patientId, {
+        firstName: req.body.firstName || "Untitled Event",
+        lastName: req.body.lastName
+    }, {new: true})
+    .then(data => {
+        if(!data) {
+            return res.status(404).send({
+                message: "Patient not found with id " + req.params.patientId
+            });
+        }
+        res.send(data);
+    }).catch(err => {
+        if(err.kind === 'ObjectId') {
+            return res.status(404).send({
+                message: "Patient not found with id " + req.params.patientId
+            });                
+        }
+        return res.status(500).send({
+            message: "Error updating Patient with id " + req.params.patientId
+        });
+    });
+};
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+exports.delete = (req, res) => {
+    Patient.findByIdAndRemove(req.params.patientId)
+    .then(event => {
+        if(!event) {
+            return res.status(404).send({
+                message: "Patient not found with id " + req.params.patientId
+            });
+        }
+        res.send({message: "Patient deleted successfully!"});
+    }).catch(err => {
+        if(err.kind === 'ObjectId' || err.name === 'NotFound') {
+            return res.status(404).send({
+                message: "Event not found with id " + req.params.eventId
+            });                
+        }
+        return res.status(500).send({
+            message: "Could not delete event with id " + req.params.eventId
+        });
+    });
+};
